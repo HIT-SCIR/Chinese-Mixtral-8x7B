@@ -205,11 +205,11 @@ $ sbatch scripts/train.sh
 
 ```bibtex
 @misc{Chinese-Mixtral-8x7B,
-    author = {HIT-SCIR-LA}.
-    title = {Chinese-Mixtral-8x7B: An Open-Source Universal LLM}
+    author = {HIT-SCIR-LA},
+    title = {Chinese-Mixtral-8x7B: An Open-Source Universal LLM},
     year = {2024},
     publisher = {GitHub},
-    journal = {GitHub repository}
+    journal = {GitHub repository},
     howpublished = {\url{https://github.com/carfly/Chinese-Mixtral-8x7B}}
 }
 ```
