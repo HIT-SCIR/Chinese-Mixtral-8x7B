@@ -56,23 +56,19 @@
 
 ### 中文编解码效率评测
 
-我们的Chinese-Mixtral-8x7B中文编解码效率较原模型提高了43.87%，有利于加速中文文本的推理速度
+针对中文编解码效率，我们的Chinese-Mixtral-8x7B中文编解码效率较原模型提高了41.5%，有利于加速中文文本的推理速度，并在In-Context Learning、Chain-of-Thought等场景中节省序列长度。
 
-下表为基于40万字的中文小说对模型中文编解码效率的测试结果：
+下表为基于[SkyPile](https://huggingface.co/datasets/Skywork/SkyPile-150B)数据集的一个切片（2023-06_zh_head_0000.jsonl，约1.4GB）对模型中文编解码效率的详细测试结果：
 
-|         模型名称         | 词表大小  | 40万字中文文本Token量 | 相对压缩率提高 |
-|:--------------------:|:-----:|:--------------:|:-------:|
-|     Mixtral-8x7B     | 32000 |    506,540     |    -    |
-| Chinese-Mixtral-8x7B | 57000 |    284,312     | 43.87%  |
-
-<!-- (506,540 - 284,312) / 506,540 -->
-
-<!-- 下表为基于[SkyPile](https://huggingface.co/datasets/Skywork/SkyPile-150B)数据集对模型中文编解码效率的测试结果：
-
-|         模型名称         | 词表大小  | 1GB中文文本Token量 | 相对压缩率提高 |
-|:--------------------:|:-----:|:-------------:|:-------:|
-|     Mixtral-8x7B     | 32000 | TODO |    -    |
-| Chinese-Mixtral-8x7B | 57000 | TODO |  TODO%   | -->
+|                模型名称                |  模型类别   | 词表大小  | 中文文本Token量 | 相对压缩率提高 |
+|:----------------------------------:|:-------:|:-----:|:----------:|:-------:|
+|     meta-llama/Llama-2-13B-hf      |  LLaMA  | 32000 |    780M    |    -    |
+|      IDEA-CCNL/Ziya2-13B-Base      |  LLaMA  | 39424 |    532M    |  31.8%  |
+| TigerResearch/tigerbot-13b-base-v3 |  LLaMA  | 65112 |    342M    |  56.1%  |
+|  Linly-AI/Chinese-LLaMA-2-13B-hf   |  LLaMA  | 40076 |    532M    |  31.7%  |
+|      hfl/chinese-llama-2-13b       |  LLaMA  | 55296 |    365M    |  53.1%  |
+|    mistralai/Mixtral-8x7B-v0.1     | Mixtral | 32000 |    606M    |    -    |
+|   **Chinese-Mixtral-8x7B(本项目)**    | Mixtral | 57000 |    355M    |  41.5%  |
 
 ## ⚙️ 模型细节
 
