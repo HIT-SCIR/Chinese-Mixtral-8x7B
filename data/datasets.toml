@@ -1,0 +1,17 @@
+[DKYoon-SlimPajama-6B]
+splits = ["train", "dev"]
+root = "{DATA_DIR}/en/{name}"
+doc = "{name}-{split}"
+encoded = "encoded-{name}-{split}"
+
+[SkyPile-150B-2023]
+splits = ["train", "dev"]
+root = "{DATA_DIR}/zh/{name}"
+doc = "{name}-{split}"
+encoded = "encoded-{name}-{split}"
+
+[SkyPile-150B-2022]
+splits = ["train", "dev"]
+root = "{DATA_DIR}/zh/{name}"
+doc = "{name}-{split}"
+encoded = "encoded-{name}-{split}"
