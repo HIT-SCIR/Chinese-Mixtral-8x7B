@@ -35,7 +35,7 @@
 
 ## 💻 模型推理
 
-Chinese-Mixtral-8x7B支持完整的Mixtral-8x7B模型生态，包括使用`vLLM`、`Flash Attention 2`进行加速，使用`bitsandbytes`进行模型量化。以下是使用Chinese-Mixtral-8x7B进行推理的代码示例。
+Chinese-Mixtral-8x7B支持完整的Mixtral-8x7B模型生态，包括使用`vLLM`、`Flash Attention 2`进行加速，使用`bitsandbytes`进行模型量化等。以下是使用Chinese-Mixtral-8x7B进行推理的代码示例。
 
 使用Flash Attention 2：
 ```python
@@ -45,7 +45,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 model_id = "HIT-SCIR/Chinese-Mixtral-8x7B"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 
-model = AutoModelForCausalLM.from_pretrained(model_id, attn_implementation="flash_attention_2")
+model = AutoModelForCausalLM.from_pretrained(model_id, attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16, device_map="auto")
 
 text = "我的名字是"
 inputs = tokenizer(text, return_tensors="pt").to(0)
@@ -62,7 +62,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 model_id = "HIT-SCIR/Chinese-Mixtral-8x7B"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 
-model = AutoModelForCausalLM.from_pretrained(model_id, load_in_4bit=True)
+model = AutoModelForCausalLM.from_pretrained(model_id, load_in_4bit=True, device_map="auto")
 
 text = "我的名字是"
 inputs = tokenizer(text, return_tensors="pt").to(0)
