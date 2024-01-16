@@ -4,6 +4,8 @@
     </h1>
 </div>
 
+![](img/logo.png)
+
 <div align="center">
     <a href="https://github.com/HIT-SCIR/Chinese-Mixtral-8x7B/pulls">
         <image src="https://img.shields.io/badge/PRs-welcome-brightgreen"></image>
