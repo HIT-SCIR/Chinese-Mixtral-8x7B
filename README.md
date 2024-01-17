@@ -100,7 +100,7 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 ### 模型生成效果
 
-下表为各个扩词表模型的生成效果。由于部分模型的预训练语料未使用`eos_token`进行分隔，我们采用了`max_tokens = 100`对生成文本进行截断。我们的采样参数为`temperature = 0.8, top_p = 0.95`。
+下表为各个扩词表模型的生成效果。由于部分模型的预训练语料未使用`eos_token`进行分隔，我们采用了`max_tokens = 100`对生成文本进行截断。我们的采样参数为`temperature = 0.8, top_p = 0.9`。
 
 ![](./img/case.png)
 
