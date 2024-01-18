@@ -3,6 +3,7 @@ from pathlib import Path
 import fire
 import matplotlib.pyplot as plt
 import torch
+from safetensors import safe_open
 from transformers import AutoTokenizer
 
 
@@ -54,17 +55,24 @@ def draw(old_embeddings, new_embeddings, save):
 def main(
         old_tokenizer: str,
         new_tokenizer: str,
+        num_shards: int,
         old_model: str,
         new_model: str,
-        save_embedding_plots: bool,
+        save_embedding_plots: bool = False,
 ):
     # load tokenizers
     old_tokenizer = AutoTokenizer.from_pretrained(old_tokenizer)
     new_tokenizer = AutoTokenizer.from_pretrained(new_tokenizer)
-    new_vocab_size = new_tokenizer.vocab_size
+    new_vocab_size = len(new_tokenizer)  # __len__ = vocab_size + num_added_tokens
 
     # load embeddings and lm_head
-    model_dict = torch.load(Path(old_model) / "pytorch_model.bin")
+    model_path_template = old_model + "/model-{index:05d}-of-{total:05d}.safetensors"
+    model_dict = {}
+    for i in range(1, num_shards + 1):
+        shard_path = model_path_template.format(index=i, total=num_shards)
+        with safe_open(shard_path, framework="pt", device="cpu") as f:
+            for k in f.keys():
+                model_dict[k] = f.get_tensor(k)
 
     # shape:
     #   old_embeddings: (vocab_size, d_model)
