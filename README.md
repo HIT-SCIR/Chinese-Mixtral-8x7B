@@ -233,10 +233,10 @@ TRAIN_DATASETS=(
 如果您使用SLURM集群管理系统，可以通过`sbatch`进行提交：
 
 ```shell
-$ sbatch scripts/train.sh
+$ sbatch scripts/train-pt.sh
 ```
 
-如果没有SLURM或希望通过命令行启动训练，您可以直接提取`scripts/train.sh`中的`torchrun`开始训练。
+如果没有SLURM或希望通过命令行启动训练，您可以直接提取`scripts/train-pt.sh`中的`torchrun`开始训练。
 
 </details>
 
@@ -247,7 +247,37 @@ $ sbatch scripts/train.sh
 
 </summary>
 
-本项目发布的Chinese-Mixtral-8x7B为基座模型，没有经过微调。如果您希望使用Chinese-Mixtral-8x7B进行下游任务微调或SFT，可以参考HuggingFace给出Mixtral-8x7B的QLoRA微调脚本进行训练：[HuggingFace的官方示例代码](https://github.com/huggingface/trl/blob/main/examples/scripts/sft.py)。
+#### 数据集准备
+
+微调需要的数据集格式与预训练类似，数据集文件需要为jsonl格式：每行一个json，其中需要包含`"text"`字段，将instruction、input和output全部按照您需要的模板进行拼接。
+
+然后需要将数据集名称和路径注册到`data/datasets.toml`中：
+
+```toml
+[ShareGPT-Chinese]              # 数据集名称
+splits = ["train"]              # 数据集train/valid集合
+root = "{DATA_DIR}/sft/{name}"  # 数据集根目录
+doc = "{name}-{split}"          # 数据集文件名
+```
+
+#### 开始训练
+
+训练启动脚本为`scripts/train-sft.sh`。可以通过修改其中的`TRAIN_DATASETS`修改训练数据集和数据集比例：
+
+```shell
+TRAIN_DATASETS=(
+    1.0:ShareGPT-Chinese  # 使用全量ShareGPT-Chinese
+    0.5:ShareGPT-English  # 使用ShareGPT-English的50%数据
+)
+```
+
+如果您使用SLURM集群管理系统，可以通过`sbatch`进行提交：
+
+```shell
+$ sbatch scripts/train-sft.sh
+```
+
+如果没有SLURM或希望通过命令行启动训练，您可以直接提取`scripts/train-sft.sh`中的`torchrun`开始训练。
 
 </details>
 
