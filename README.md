@@ -35,8 +35,8 @@
 
 |             模型名称             | 模型大小  |                                     下载地址                                      |                                                         备注                                                          |
 |:----------------------------:|:-----:|:-----------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------:|
-|     Chinese-Mixtral-8x7B     | 88GB  |     [🤗HuggingFace](https://huggingface.co/HIT-SCIR/Chinese-Mixtral-8x7B)     |                                                  中文扩词表完整模型，可以直接使用                                                   |
-| Chinese-Mixtral-8x7B-adapter | 2.7GB | [🤗HuggingFace](https://huggingface.co/HIT-SCIR/Chinese-Mixtral-8x7B-adapter) | LoRA权重，需要与原版Mixtral-8x7B进行合并才可以使用，合并脚本请参考[这里](https://gist.github.com/ChrisHayduk/1a53463331f52dca205e55982baf9930) |
+|     Chinese-Mixtral-8x7B     | 88GB  |     [HuggingFace](https://huggingface.co/HIT-SCIR/Chinese-Mixtral-8x7B)<br>[ModelScope](https://modelscope.cn/models/HIT-SCIR/Chinese-Mixtral-8x7B/summary)     |                                                  中文扩词表完整模型，可以直接使用                                                   |
+| Chinese-Mixtral-8x7B-adapter | 2.7GB | [HuggingFace](https://huggingface.co/HIT-SCIR/Chinese-Mixtral-8x7B-adapter) | LoRA权重，需要与原版Mixtral-8x7B进行合并才可以使用，合并脚本请参考[这里](https://gist.github.com/ChrisHayduk/1a53463331f52dca205e55982baf9930) |
 
 ## 💻 模型推理
 
