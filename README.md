@@ -13,6 +13,11 @@
     </a>
 </div>
 
+## 🎉 新闻
+
+- [2024-02-09] 发布基于Chinese-Mixtral-8x7B指令微调的模型：[活字 3.0](https://github.com/HIT-SCIR/huozi)；开源指令微调代码。
+- [2024-01-18] 发布Chinese-Mixtral-8x7B基座模型；开源增量预训练代码。
+
 ## 🚀 介绍
 
 本项目基于Mistral发布的模型[Mixtral-8x7B](https://mistral.ai/news/mixtral-of-experts/)进行了中文扩词表增量预训练，希望进一步促进中文自然语言处理社区对MoE模型的研究。我们扩充后的词表显著提高了模型对中文的编解码效率，并通过大规模开源语料对扩词表模型进行增量预训练，使模型具备了强大的中文生成和理解能力。
