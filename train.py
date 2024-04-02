@@ -1,13 +1,16 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from functools import partial
+from typing import Dict, List, Optional, Literal
 
 import tomli
 import torch
 import torch.distributed
 import transformers
-from datasets import concatenate_datasets, load_from_disk
-from peft import LoraConfig, TaskType, get_peft_model, PeftModel
+from datasets import concatenate_datasets, load_from_disk, load_dataset
+from peft import LoraConfig, TaskType, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, DataCollatorForLanguageModeling
+from trl import SFTTrainer
+from typing_extensions import assert_never
 
 from data.utils import parse_dataset_name_and_ratio, count_token
 
@@ -55,6 +58,8 @@ class TrainingArguments(transformers.TrainingArguments):
         default=512,
         metadata={"help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."},
     )
+    mode: Literal["pt", "sft"] = field(default="pt")
+    neftune_noise_alpha: Optional[float] = field(default=None)
 
 
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer, output_dir: str):
@@ -124,6 +129,46 @@ def build_dataset(train_datasets: List[str], valid_datasets: List[str]):
     return train_dataset, valid_dataset
 
 
+def build_sft_dataset(train_datasets: List[str], valid_datasets: List[str]):
+    # TODO refactor with build_dataset
+
+    with open("./data/datasets.toml", "rb") as f:
+        ds_info = tomli.load(f)
+
+    train_data_name2ratio = parse_dataset_name_and_ratio(train_datasets)  # {"wudao": 0.1, "slimpajama": 0.2}
+    train_data_name2pathNratio = {}  # {"wudao": ("/path/to/wudao", 0.1), "slimpajama": ("/path/to/slimpajama", 0.2)}
+    for ds_name, ratio in train_data_name2ratio.items():
+        ds = ds_info[ds_name]
+        assert "train" in ds["splits"]
+        train_data_name2pathNratio[ds_name] = (ds["root"].format(DATA_DIR="./data", name=ds_name) + "/" +
+                                               ds["doc"].format(name=ds_name, split="train") + ".jsonl",
+                                               ratio)
+
+    valid_data_name2path = {}  # {"wudao": "/path/to/wudao", "slimpajama": "/path/to/slimpajama"}
+    for ds_name in valid_datasets:
+        ds = ds_info[ds_name]
+        assert "dev" in ds["splits"]
+        valid_data_name2path[ds_name] = (ds["root"].format(DATA_DIR="./data", name=ds_name) + "/" +
+                                         ds["doc"].format(name=ds_name, split="dev") + ".jsonl")
+
+    load_jsonl_dataset = partial(load_dataset, path="json", split="train", cache_dir="./hf-cache")
+    train_data_name2dsNratio = {
+        ds_name: (load_jsonl_dataset(data_files=path), ratio)  # {"wudao": (wudao_dataset, 0.1), ...}
+        for ds_name, (path, ratio) in train_data_name2pathNratio.items()
+    }
+    train_dataset = concatenate_datasets(
+        [ds.select(range(int(len(ds) * ratio))) for ds, ratio in train_data_name2dsNratio.values()]
+    )  # 0.1 * wudao_dataset + 0.2 * slimpajama_dataset
+    valid_dataset = {name: load_jsonl_dataset(data_files=path) for name, path in valid_data_name2path.items()}
+
+    print_rank_0("=========================================")
+    print_rank_0(f"Training dataset: {len(train_dataset)}")
+    print_rank_0(f"Validation dataset: {valid_dataset}")
+    print_rank_0("=========================================")
+
+    return train_dataset, valid_dataset
+
+
 def print_rank_0(*args, **kwargs):
     if torch.distributed.is_initialized():
         if torch.distributed.get_rank() == 0:
@@ -146,7 +191,7 @@ def train():
         torch_dtype="auto",
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
-        use_flash_attention_2=True,
+        attn_implementation="flash_attention_2",
     )
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -194,6 +239,7 @@ def train():
         model = get_peft_model(model, peft_config)
 
         # To resume from existing adapter
+        # from peft import PeftModel
         # model = PeftModel.from_pretrained(model, "/path/to/adapter/checkpoint", is_trainable=True)
 
         for name, param in model.named_parameters():
@@ -204,12 +250,33 @@ def train():
         model.print_trainable_parameters()
         print_rank_0("=========================================")
 
-    train_dataset, valid_dataset = build_dataset(data_args.train_datasets, data_args.valid_datasets)
+    if training_args.mode == "pt":
+        builder = build_dataset
+    elif training_args.mode == "sft":
+        builder = build_sft_dataset
+    else:
+        assert_never(None)
+    train_dataset, valid_dataset = builder(data_args.train_datasets, data_args.valid_datasets)
 
     model.is_parallelizable = True
     model.model_parallel = True
 
-    trainer = Trainer(
+    if training_args.mode == "pt":
+        if training_args.neftune_noise_alpha:
+            print_rank_0("WARNING: `neftune_noise_alpha` is not supported in `pt` mode.")
+        partial_trainer = partial(Trainer)
+    elif training_args.mode == "sft":
+        partial_trainer = partial(
+            SFTTrainer,
+            max_seq_length=training_args.model_max_length,
+            neftune_noise_alpha=training_args.neftune_noise_alpha,
+            peft_config=peft_config if peft_args.enable_lora else None,
+            dataset_text_field="text",
+        )
+    else:
+        assert_never(None)
+
+    trainer = partial_trainer(
         model=model,
         train_dataset=train_dataset,
         eval_dataset=valid_dataset,

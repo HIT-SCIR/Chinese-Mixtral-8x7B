@@ -162,8 +162,10 @@ Mixtral-8x7B模型参数量为46.7B，全参数训练需要同时使用多种并
 ```shell
 # Pytorch + Transformers
 $ pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
-$ pip install transformers==4.36.2 datasets evaluate peft accelerate gradio optimum sentencepiece
+$ pip install transformers==4.36.2 datasets evaluate peft accelerate gradio optimum sentencepiece trl
 $ pip install jupyterlab scikit-learn pandas matplotlib tensorboard nltk rouge bitsandbytes fire
+# CUDA Toolkit
+$ conda install nvidia/label/cuda-11.7.1::cuda
 # DeepSpeed
 $ git clone https://github.com/microsoft/DeepSpeed.git
 $ cd DeepSpeed
