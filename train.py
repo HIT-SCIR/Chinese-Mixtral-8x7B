@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from functools import partial
 from typing import Dict, List, Optional, Literal
@@ -8,11 +9,14 @@ import torch.distributed
 import transformers
 from datasets import concatenate_datasets, load_from_disk, load_dataset
 from peft import LoraConfig, TaskType, get_peft_model
-from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, DataCollatorForLanguageModeling
+from transformers import AutoModelForCausalLM, Trainer, DataCollatorForLanguageModeling, TrainerCallback
 from trl import SFTTrainer
 from typing_extensions import assert_never
 
 from data.utils import parse_dataset_name_and_ratio, count_token
+from tokenizer.tokenization_llama import LlamaBPEDropoutTokenizer
+
+os.environ["WANDB_PROJECT"] = "mixtral"
 
 
 @dataclass
@@ -60,6 +64,7 @@ class TrainingArguments(transformers.TrainingArguments):
     )
     mode: Literal["pt", "sft"] = field(default="pt")
     neftune_noise_alpha: Optional[float] = field(default=None)
+    bpe_dropout_alpha: Optional[float] = field(default=None)
 
 
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer, output_dir: str):
@@ -177,6 +182,16 @@ def print_rank_0(*args, **kwargs):
         print(*args, **kwargs)
 
 
+class EvaluateFirstStepCallback(TrainerCallback):
+    # Make Trainer evaluate before first training step.
+    # `--logging_first_step` will not work, maybe this is a bug.
+    # We use this callback to deal with this.
+    # See https://discuss.huggingface.co/t/how-to-evaluate-before-first-training-step/18838/7
+    def on_step_begin(self, args, state, control, **kwargs):
+        if state.global_step == 0:
+            control.should_evaluate = True
+
+
 def train():
     model_args: ModelArguments
     data_args: DataArguments
@@ -194,12 +209,13 @@ def train():
         attn_implementation="flash_attention_2",
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(
+    tokenizer = LlamaBPEDropoutTokenizer.from_pretrained(
         model_args.tokenizer_name_or_path,
         cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
-        padding_side="right",
+        padding_side="left",
         use_fast=True,
+        bpe_dropout_alpha=training_args.bpe_dropout_alpha,
     )
     if tokenizer.pad_token is None:
         smart_tokenizer_and_embedding_resize(
@@ -284,6 +300,8 @@ def train():
         args=training_args,
     )
     model.config.use_cache = False
+
+    trainer.add_callback(EvaluateFirstStepCallback())
 
     trainer.train()
     trainer.save_state()
